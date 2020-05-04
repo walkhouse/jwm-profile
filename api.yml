@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: profiledb
+  namespace: jwalkmedia
+  labels:
+    stage: production
+    name: profiledb
+    app: jwmProfile
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        stage: production
+        name: profiledb
+        app: jwmProfile
+    spec:
+      containers:
+        - name: profiledb
+          image: jwm-profile-api:latest
+          ports:
+            - name: jwmProfile-3000
+              containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: profiledb
+  namespace: jwalkmedia
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    stage: production
+    name: profiledb
+    app: jwmProfile

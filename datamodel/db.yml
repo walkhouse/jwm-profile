@@ -1,0 +1,72 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: profiledb
+  namespace: jwalkmedia
+  labels:
+    stage: production
+    name: profiledb
+    app: postgres
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        stage: production
+        name: profiledb
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: 'postgres:10.3'
+          env:
+            - name: POSTGRES_PASSWORD
+              value: 'jwmProfile'
+            - name: POSTGRES_USER
+              value: 'jwmProfile'
+          ports:
+            - name: postgres-5432
+              containerPort: 5432
+          volumeMounts:
+            - name: profiledb-disk
+              readOnly: false
+              mountPath: /var/lib/postgresql
+      restartPolicy: Always
+      volumes:
+        - name: profiledb-disk
+          persistentVolumeClaim:
+            claimName: profiledb-disk
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: profiledb-disk
+  namespace: jwalkmedia
+  labels:
+    stage: production
+    name: profiledb
+    app: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: profiledb
+  namespace: jwalkmedia
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    stage: production
+    name: profiledb
+    app: postgres
